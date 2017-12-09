@@ -368,6 +368,12 @@ namespace TSP
             results[TIME] = timer.Elapsed.ToString();
             results[COUNT] = count.ToString();
 
+            Console.WriteLine("Default finished with {0} cost", results[COST]);
+            for (i = 0; i < Cities.Length; i++)                            // Now build the route using the random permutation 
+            {
+                Console.WriteLine("Row {0} in path is city {1}", i, Route.IndexOf(Cities[i]));
+            }
+
             return results;
         }
 
@@ -448,6 +454,7 @@ public void printCostArray(ref double[,] costArray) {
                 Console.Write("{0:N2}\t", temp);
             }
         }
+        Console.WriteLine(" ");
     }
 }
 
@@ -687,11 +694,24 @@ public string[] bBSolveProblem()
 			results[TIME] = timer.Elapsed.ToString();
             results[COUNT] = count.ToString();
 
+            Console.WriteLine("Greedy finished with {0} cost", results[COST]);
+
             return results;
         }
         public ArrayList Swap(ArrayList path, int i, int k)
         {
             ArrayList newPath = new ArrayList();
+            int start = i-1;
+            if (start < 0) {
+                start = path.Count - 1;
+            }
+            int end = k+1;
+            if (end == path.Count) {
+                end = 0;
+            }
+            Console.WriteLine("Swapping {0} to {1} with {2} to {3}", i-1, i, k, k+1);
+
+            // TODO we're adding one too many cities here. We need to figure out where the overlap is and go from there.
             int x;
             for(x = 0; x < i; x++)
             {
@@ -705,18 +725,36 @@ public string[] bBSolveProblem()
             {
                 newPath.Add(path[x]);
             }
+            ArrayList cities = new ArrayList(Cities);
+            foreach (var c in path) {
+                Console.Write("{0}->", cities.IndexOf(c));
+            }
+            Console.WriteLine("");
+            foreach (var c in newPath) {
+                Console.Write("{0}->", cities.IndexOf(c));
+            }
+            Console.WriteLine("");
             return newPath;
         }
 
         //2-opt 
         public string[] fancySolveProblem()
         {
+            Console.WriteLine("--------\nNew K-opt");
             string[] results = new string[3];
             int updates = 0, i, k;
             defaultSolveProblem();
             bool betterSolutionFound;
             Double previousBest;
             TSPSolution newPath;
+
+            double[,] costArray = new double[this._size, this._size];
+
+            // calculates all the costs and fills our cost array
+            fillArrayInPlaceWithCosts(ref costArray);
+            printCostArray(ref costArray);
+            Console.WriteLine("\n----");
+
             do
             {
                 previousBest = costOfBssf();
@@ -725,7 +763,7 @@ public string[] bBSolveProblem()
                 {
                     for(k = i+1; k < Cities.Length-1; k++)
                     {
-                        newPath = new TSPSolution( Swap(bssf.Route, i, k));
+                        newPath = new TSPSolution( Swap(bssf.Route, i, k) );
                         Console.WriteLine("Previous best: {0} New Route: {1}", previousBest, newPath.costOfRoute());
                         if(previousBest > newPath.costOfRoute())
                         {
@@ -743,6 +781,7 @@ public string[] bBSolveProblem()
                     }
                 }
             } while (betterSolutionFound);
+
             Stopwatch timer = new Stopwatch();
             timer.Start();
             timer.Stop();

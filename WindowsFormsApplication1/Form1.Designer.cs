@@ -226,8 +226,8 @@ namespace TSP
             this.AlgorithmMenu2.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.AlgorithmMenu2.Name = "AlgorithmMenu2";
             this.AlgorithmMenu2.Size = new System.Drawing.Size(61, 22);
-            this.AlgorithmMenu2.Tag = this.bBToolStripMenuItem;
-            this.AlgorithmMenu2.Text = "B and B";
+            this.AlgorithmMenu2.Tag = this.myTSPToolStripMenuItem;
+            this.AlgorithmMenu2.Text = "My TSP";
             this.AlgorithmMenu2.ButtonClick += new System.EventHandler(this.AlgorithmMenu2_ButtonClick_1);
             this.AlgorithmMenu2.DropDownItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.AlgorithmMenu2_DropDownItemClicked);
             // 
