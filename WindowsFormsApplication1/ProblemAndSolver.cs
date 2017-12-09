@@ -743,7 +743,7 @@ public string[] bBSolveProblem()
             Console.WriteLine("--------\nNew K-opt");
             string[] results = new string[3];
             int updates = 0, i, k;
-            defaultSolveProblem();
+            greedySolveProblem();
             bool betterSolutionFound;
             Double previousBest;
             TSPSolution newPath;
