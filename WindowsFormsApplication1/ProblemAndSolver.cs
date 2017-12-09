@@ -468,7 +468,10 @@ public void printCostArray(ref double[,] costArray) {
 public string[] bBSolveProblem()
 {
     // run the default solution to get BSSF
-    defaultSolveProblem();            
+    // defaultSolveProblem();            
+
+    // run greedy to speed up :)
+    greedySolveProblem();            
     Stopwatch timer = new Stopwatch();
 
     timer.Start();
@@ -592,12 +595,13 @@ public string[] bBSolveProblem()
     return results;
 }
 
+
         /////////////////////////////////////////////////////////////////////////////////////////////
         // These additional solver methods will be implemented as part of the group project.
         ////////////////////////////////////////////////////////////////////////////////////////////
 
         /// <summary>
-        /// finds the greedy tour starting from each city and keeps the best (valid) one
+        // finds the greedy tour starting from each city and keeps the best (valid) one
         /// </summary>
         /// <returns>results array for GUI that contains three ints: cost of solution, time spent to find solution, number of solutions found during search (not counting initial BSSF estimate)</returns>
         public string[] greedySolveProblem()
@@ -606,36 +610,77 @@ public string[] bBSolveProblem()
             // workon later!
             string[] results = new string[3];
 
-			int i, swap, temp, count = 0;
+            double[,] costArray = new double[this._size, this._size];
+
+            // calculates all the costs and fills our cost array
+            fillArrayInPlaceWithCosts(ref costArray);
+
+			int i, j, swap, temp, count = 0;
 			int[] perm = new int[Cities.Length];
 			Route = new ArrayList();
+			ArrayList BestRoute = new ArrayList();
+            HashSet<int> RouteSet = new HashSet<int>();
+            double bestSolutionCost = double.PositiveInfinity;
+            double currentBestSolutionCost = double.PositiveInfinity;
 			Random rnd = new Random();
 			Stopwatch timer = new Stopwatch();
 
 			timer.Start();
 
-            do
+            for (i = 0; i < this._size; i++)
             {
-                for (i = 0; i<perm.Length; i++)                                 // create a random permutation template
-                    perm[i] = i;
-				
-                for (i = 0; i<perm.Length; i++)
-                {
-                    swap = i;
-                    while (swap == i)
-                        swap = rnd.Next(0, Cities.Length);
-                    temp = perm[i];
-                    perm[i] = perm[swap];
-                    perm[swap] = temp;
-                }
                 Route.Clear();
-                for (i = 0; i<Cities.Length; i++)                            // Now build the route using the random permutation 
-                {
-                    Route.Add(Cities[perm[i]]);
+                RouteSet.Clear();
+
+                Route.Add(i);
+                RouteSet.Add(i);
+                currentBestSolutionCost = 0;
+
+                while (RouteSet.Count < this._size)
+                {  
+                    double minCost = double.PositiveInfinity;
+                    int minCity = -1;
+
+                    for (j = 0; j < this._size; j++) 
+                    {
+                        if (RouteSet.Contains(j)) {
+                            continue;
+                        } else {
+                            if (costArray[ (int) Route[Route.Count - 1], j ] < minCost) {
+                                minCost = costArray[ (int) Route[Route.Count - 1], j ];
+                                minCity = j;
+                            }
+                        }
+                    }
+                    if (minCity < 0) {
+                        // no best solution added
+                        break;
+                    }
+                    else {
+                        RouteSet.Add(minCity);
+                        Route.Add(minCity);
+                        currentBestSolutionCost += minCost;
+                    }
                 }
-                bssf = new TSPSolution(Route);
-				count++;
-            } while (costOfBssf() == double.PositiveInfinity);                // until a valid route is found
+                if (RouteSet.Count == this._size) {
+                    if (currentBestSolutionCost < bestSolutionCost) {
+                        bestSolutionCost = currentBestSolutionCost;
+                        BestRoute = Route.Clone() as ArrayList;
+                        count++;
+                    }
+                }
+            }
+
+            // until a valid route is found
+            ArrayList newRoute = new ArrayList();
+            foreach (int index in BestRoute) {
+                newRoute.Add(Cities[index]);
+            }
+            // update BSSF with our new route of cities
+            bssf = new TSPSolution(newRoute);
+            // calculate the BSSF's actual cost
+            double newBSSFCost = costOfBssf();
+
             timer.Stop();
 
             results[COST] = costOfBssf().ToString();                          // load results array
