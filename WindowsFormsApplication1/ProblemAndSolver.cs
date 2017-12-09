@@ -721,7 +721,7 @@ public string[] bBSolveProblem()
             {
                 newPath.Add(path[k-x]);
             }
-            for(x = k; x < Cities.Length; x++)
+            for(x = k+1; x < Cities.Length; x++)
             {
                 newPath.Add(path[x]);
             }
