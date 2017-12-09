@@ -689,16 +689,66 @@ public string[] bBSolveProblem()
 
             return results;
         }
+        public ArrayList Swap(ArrayList path, int i, int k)
+        {
+            ArrayList newPath = new ArrayList();
+            int x;
+            for(x = 0; x < i; x++)
+            {
+                newPath.Add(path[x]);
+            }
+            for(x = 0; x <= k-i; x++)
+            {
+                newPath.Add(path[k-x]);
+            }
+            for(x = k; x < Cities.Length; x++)
+            {
+                newPath.Add(path[x]);
+            }
+            return newPath;
+        }
 
+        //2-opt 
         public string[] fancySolveProblem()
         {
             string[] results = new string[3];
-
-            // TODO: Add your implementation for your advanced solver here.
-
-            results[COST] = "not implemented";    // load results into array here, replacing these dummy values
-            results[TIME] = "-1";
-            results[COUNT] = "-1";
+            int updates = 0, i, k;
+            defaultSolveProblem();
+            bool betterSolutionFound;
+            Double previousBest;
+            TSPSolution newPath;
+            do
+            {
+                previousBest = costOfBssf();
+                betterSolutionFound = false;
+                for (i = 0; i < Cities.Length-1; i++)
+                {
+                    for(k = i+1; k < Cities.Length-1; k++)
+                    {
+                        newPath = new TSPSolution( Swap(bssf.Route, i, k));
+                        Console.WriteLine("Previous best: {0} New Route: {1}", previousBest, newPath.costOfRoute());
+                        if(previousBest > newPath.costOfRoute())
+                        {
+                            Console.WriteLine("updating Best");
+                            bssf = newPath;
+                            updates++;
+                            betterSolutionFound = true;
+                            break;
+                        }
+                        
+                    }
+                    if (betterSolutionFound)
+                    {
+                        break;
+                    }
+                }
+            } while (betterSolutionFound);
+            Stopwatch timer = new Stopwatch();
+            timer.Start();
+            timer.Stop();
+            results[COST] = costOfBssf().ToString();
+            results[TIME] = timer.Elapsed.ToString();
+            results[COUNT] = updates.ToString();
 
             return results;
         }
