@@ -507,14 +507,17 @@ public string[] bBSolveProblem()
     int destination = 0;
     HeapNode currentNode;
     ArrayList currentRoute; 
-    double[,] currentCostArray;
+    double[,] currentCostArray = new double[1, 1];
     double currentBSSFCost = costOfBssf();
+    Console.WriteLine("{0} is our currentBSSFCost", currentBSSFCost);
     double costToNextCity = 0;
     double addition = 0;
     bool updatedBSSF = false;
     int updates = 0;
     int prunes = 0;
     int totalInserts = 0;
+    bool shouldSkipAfterPath = false;
+    TSPSolution tempBssf;
 
     // Keep working through solutions until our queue is done with partial solutions 
     // or runs out of time.
@@ -524,7 +527,9 @@ public string[] bBSolveProblem()
         currentNode = queue.deleteMin();
 
         // initial prune right after coming off the queue
-        if (currentNode.LowerBound > currentBSSFCost) {
+        if (currentNode.LowerBound >= currentBSSFCost) {
+            // less than or equal because once we've got a good path, we don't want anything that's the same
+            // Console.WriteLine("pre check pruned node: {0} currentBSSF: {1}", currentNode.LowerBound, currentBSSFCost);
             // PRUNE. 
             prunes++;
             continue;
@@ -537,28 +542,35 @@ public string[] bBSolveProblem()
                 // skip because we have already visited or should be impossible to visit
             } else {
                 totalInserts++;
+                shouldSkipAfterPath = false;
                 // new state's lower bound starts with the currentNode's lowerBound
                 currentLowerBound = currentNode.LowerBound;
-                
+                currentLowerBound += costToNextCity;
 
-                currentCostArray = (double [,]) currentNode.CostArray.Clone();
-            
-                // no one can come through those paths any more
-                currentCostArray[currentNode.LastCity, destination] = double.PositiveInfinity;
-
-                // set the cost of returning to a node infinity
-                for (int iter = 0; iter < this._size; iter++) {
-                    currentCostArray[currentNode.LastCity, iter] = double.PositiveInfinity;
-                    currentCostArray[iter, destination] = double.PositiveInfinity;
+                if ( currentLowerBound >= currentBSSFCost) {
+                    shouldSkipAfterPath = true;
                 }
 
-                // calculate new node lower bound
-                addition = reduceArrayInPlace(ref currentCostArray);    
-                addition += costToNextCity;
+                if (!shouldSkipAfterPath) {
+                    currentCostArray = (double [,]) currentNode.CostArray.Clone();
+            
+                    // no one can come through those paths any more
+                    currentCostArray[currentNode.LastCity, destination] = double.PositiveInfinity;
 
-                currentLowerBound += addition;
+                    // set the cost of returning to a node infinity
+                    for (int iter = 0; iter < this._size; iter++) {
+                        currentCostArray[currentNode.LastCity, iter] = double.PositiveInfinity;
+                        currentCostArray[iter, destination] = double.PositiveInfinity;
+                    }
+
+                    // calculate new node lower bound
+                    addition = reduceArrayInPlace(ref currentCostArray);   
+                    currentLowerBound += addition; 
+                }
+                            
                 // should we prune?
-                if (currentLowerBound <= currentBSSFCost) {
+                if (currentLowerBound < currentBSSFCost) {
+                    // Console.WriteLine("post check unpruned node: {0} currentBSSF: {1}", currentLowerBound, currentBSSFCost);
                     // no!
                     currentRoute = (ArrayList) currentNode.CurrentPath.Clone();
                     currentRoute.Add(destination);
@@ -570,17 +582,24 @@ public string[] bBSolveProblem()
                             newRoute.Add(Cities[index]);
                         }
                         // update BSSF with our new route of cities
-                        bssf = new TSPSolution(newRoute);
+                        tempBssf = new TSPSolution(newRoute);
                         // calculate the BSSF's actual cost
-                        double newBSSFCost = costOfBssf();
-                        updatedBSSF = true;
-                        currentBSSFCost = newBSSFCost;
-                        updates++;
+                        double newBSSFCost = tempBssf.costOfRoute();
+                        if (double.IsPositiveInfinity(newBSSFCost)) {
+                            Console.WriteLine("WTF this path somehow got a bad edge and the new route is Infinity. This must happen when the next node does not have an edge back to our original node");
+                        } else {
+                            Console.WriteLine("post check lower bound on node: {0} new bssf: {1} currentBSSF: {2}", currentLowerBound, newBSSFCost, currentBSSFCost);
+                            bssf = tempBssf;
+                            updatedBSSF = true;
+                            currentBSSFCost = newBSSFCost;
+                            updates++;
+                        }
                     } else {
                         // not yet a complete solution, so just add the partial solution to the state
                         queue.insert(new HeapNode(currentCostArray, currentRoute, currentLowerBound));
                     }
                 } else {
+                    // Console.WriteLine("post check pruned node: {0} currentBSSF: {1}", currentLowerBound, currentBSSFCost);
                     // PRUNE
                     prunes++;
                 }
@@ -709,7 +728,7 @@ public string[] bBSolveProblem()
             if (end == path.Count) {
                 end = 0;
             }
-            Console.WriteLine("Swapping {0} to {1} with {2} to {3}", i-1, i, k, k+1);
+            // Console.WriteLine("Swapping {0} to {1} with {2} to {3}", i-1, i, k, k+1);
 
             // TODO we're adding one too many cities here. We need to figure out where the overlap is and go from there.
             int x;
@@ -726,14 +745,14 @@ public string[] bBSolveProblem()
                 newPath.Add(path[x]);
             }
             ArrayList cities = new ArrayList(Cities);
-            foreach (var c in path) {
-                Console.Write("{0}->", cities.IndexOf(c));
-            }
-            Console.WriteLine("");
-            foreach (var c in newPath) {
-                Console.Write("{0}->", cities.IndexOf(c));
-            }
-            Console.WriteLine("");
+            // foreach (var c in path) {
+            //     Console.Write("{0}->", cities.IndexOf(c));
+            // }
+            // Console.WriteLine("");
+            // foreach (var c in newPath) {
+            //     Console.Write("{0}->", cities.IndexOf(c));
+            // }
+            // Console.WriteLine("");
             return newPath;
         }
 
@@ -746,7 +765,10 @@ public string[] bBSolveProblem()
             greedySolveProblem();
             bool betterSolutionFound;
             Double previousBest;
+            double newPathCost = 0;
             TSPSolution newPath;
+            Stopwatch timer = new Stopwatch();
+            timer.Start();
 
             double[,] costArray = new double[this._size, this._size];
 
@@ -764,10 +786,11 @@ public string[] bBSolveProblem()
                     for(k = i+1; k < Cities.Length-1; k++)
                     {
                         newPath = new TSPSolution( Swap(bssf.Route, i, k) );
-                        Console.WriteLine("Previous best: {0} New Route: {1}", previousBest, newPath.costOfRoute());
-                        if(previousBest > newPath.costOfRoute())
+                        newPathCost = newPath.costOfRoute();
+                        if(previousBest > newPathCost)
                         {
-                            Console.WriteLine("updating Best");
+                            Console.WriteLine("updating Best after swapping {0} to {1} with {2} to {3}", i-1, i, k, k+1);
+                            Console.WriteLine("Previous best: {0} New Route: {1}", previousBest, newPathCost);
                             bssf = newPath;
                             updates++;
                             betterSolutionFound = true;
@@ -782,8 +805,7 @@ public string[] bBSolveProblem()
                 }
             } while (betterSolutionFound);
 
-            Stopwatch timer = new Stopwatch();
-            timer.Start();
+            
             timer.Stop();
             results[COST] = costOfBssf().ToString();
             results[TIME] = timer.Elapsed.ToString();
