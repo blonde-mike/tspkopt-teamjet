@@ -367,7 +367,10 @@ namespace TSP
             results[COST] = costOfBssf().ToString();                          // load results array
             results[TIME] = timer.Elapsed.ToString();
             results[COUNT] = count.ToString();
-
+            using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"default.txt", true))
+            {
+                file.WriteLine(Cities.Length.ToString() + "\t" + (((Double)timer.ElapsedMilliseconds) / 1000.0).ToString() + "\t" + costOfBssf().ToString());
+            }
             Console.WriteLine("Default finished with {0} cost", results[COST]);
             for (i = 0; i < Cities.Length; i++)                            // Now build the route using the random permutation 
             {
@@ -609,7 +612,11 @@ public string[] bBSolveProblem()
 
     timer.Stop();
     string[] results = new string[3];
-
+     
+    using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"bnb.txt", true))
+            {
+                file.WriteLine(Cities.Length.ToString() + "\t" + (((Double)timer.ElapsedMilliseconds)/1000.0).ToString() + "\t" + costOfBssf().ToString());
+            }
     results[COST] = costOfBssf().ToString();
     results[TIME] = timer.Elapsed.ToString();
 
@@ -712,7 +719,10 @@ public string[] bBSolveProblem()
             results[COST] = costOfBssf().ToString();                          // load results array
 			results[TIME] = timer.Elapsed.ToString();
             results[COUNT] = count.ToString();
-
+            using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"greedy.txt", true))
+            {
+                file.WriteLine(Cities.Length.ToString() + "\t" + (((Double)timer.ElapsedMilliseconds) / 1000.0).ToString() + "\t" + costOfBssf().ToString());
+            }
             Console.WriteLine("Greedy finished with {0} cost", results[COST]);
 
             return results;
@@ -730,7 +740,6 @@ public string[] bBSolveProblem()
             }
             // Console.WriteLine("Swapping {0} to {1} with {2} to {3}", i-1, i, k, k+1);
 
-            // TODO we're adding one too many cities here. We need to figure out where the overlap is and go from there.
             int x;
             for(x = 0; x < i; x++)
             {
@@ -810,7 +819,10 @@ public string[] bBSolveProblem()
             results[COST] = costOfBssf().ToString();
             results[TIME] = timer.Elapsed.ToString();
             results[COUNT] = updates.ToString();
-
+            using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"special.txt", true))
+            {
+                file.WriteLine(Cities.Length.ToString() + "\t" + (((Double)timer.ElapsedMilliseconds) / 1000.0).ToString() + "\t" + costOfBssf().ToString());
+            }
             return results;
         }
         #endregion
