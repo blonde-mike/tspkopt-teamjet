@@ -381,7 +381,7 @@ namespace TSP
             results[COUNT] = count.ToString();
             using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"default.txt", true))
             {
-                file.WriteLine(Cities.Length.ToString() + "\t" + (((Double)timer.ElapsedMilliseconds) / 1000.0).ToString() + "\t" + costOfBssf().ToString());
+                file.WriteLine(Cities.Length.ToString() + "\t" + timer.Elapsed.TotalSeconds.ToString() + "\t" + costOfBssf().ToString());
             }
             Console.WriteLine("Default finished with {0} cost", results[COST]);
             for (i = 0; i < Cities.Length; i++)                            // Now build the route using the random permutation 
@@ -627,7 +627,7 @@ public string[] bBSolveProblem()
      
     using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"bnb.txt", true))
             {
-                file.WriteLine(Cities.Length.ToString() + "\t" + (((Double)timer.ElapsedMilliseconds)/1000.0).ToString() + "\t" + costOfBssf().ToString());
+                file.WriteLine(Cities.Length.ToString() + "\t" + timer.Elapsed.TotalSeconds.ToString() + "\t" + costOfBssf().ToString());
             }
     results[COST] = costOfBssf().ToString();
     results[TIME] = timer.Elapsed.ToString();
@@ -734,7 +734,7 @@ public string[] bBSolveProblem()
             results[COUNT] = count.ToString();
             using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"greedy.txt", true))
             {
-                file.WriteLine(Cities.Length.ToString() + "\t" + (((Double)timer.ElapsedMilliseconds) / 1000.0).ToString() + "\t" + costOfBssf().ToString());
+                file.WriteLine(Cities.Length.ToString() + "\t" + timer.Elapsed.TotalSeconds.ToString() + "\t" + costOfBssf().ToString());
             }
             Console.WriteLine("Greedy finished with {0} cost", results[COST]);
 
@@ -1171,7 +1171,7 @@ public string[] bBSolveProblem()
             results[COUNT] = updates.ToString();
             using (System.IO.StreamWriter file = new System.IO.StreamWriter(@"special.txt", true))
             {
-                file.WriteLine(Cities.Length.ToString() + "\t" + (((Double)timer.ElapsedMilliseconds) / 1000.0).ToString() + "\t" + costOfBssf().ToString());
+                file.WriteLine(Cities.Length.ToString() + "\t" + timer.Elapsed.TotalSeconds.ToString() + "\t" + costOfBssf().ToString());
             }
             return results;
         }
