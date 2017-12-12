@@ -117,6 +117,8 @@ namespace TSP
         /// </summary>
         private int _size;
 
+        private Stopwatch timer;
+
         /// <summary>
         /// Difficulty level
         /// </summary>
@@ -347,7 +349,7 @@ namespace TSP
             int[] perm = new int[Cities.Length];
             Route = new ArrayList();
             Random rnd = new Random();
-            Stopwatch timer = new Stopwatch();
+            timer = new Stopwatch();
 
             timer.Start();
 
@@ -492,7 +494,7 @@ public string[] bBSolveProblem()
 
     // run greedy to speed up :)
     greedySolveProblem();            
-    Stopwatch timer = new Stopwatch();
+    timer = new Stopwatch();
 
     timer.Start();
 
@@ -634,6 +636,7 @@ public string[] bBSolveProblem()
     Console.WriteLine("Total Number of States: {0}", totalInserts);
     Console.WriteLine("Most States at Any Point: {0}", queue.maxCountEver);
     Console.WriteLine("Number of Prunes: {0}", prunes);
+    Console.WriteLine("B&B Cost: {0}", costOfBssf().ToString());
 
     return results;
 }
@@ -666,7 +669,7 @@ public string[] bBSolveProblem()
             double bestSolutionCost = double.PositiveInfinity;
             double currentBestSolutionCost = double.PositiveInfinity;
 			Random rnd = new Random();
-			Stopwatch timer = new Stopwatch();
+			timer = new Stopwatch();
 
 			timer.Start();
 
@@ -764,6 +767,7 @@ public string[] bBSolveProblem()
                 newPath.Add(path[x]);
             }
             ArrayList cities = new ArrayList(Cities);
+            // Console.WriteLine("swapping {0} to {1} with {2} to {3}", i-1, i, k, k+1);
             // foreach (var c in path) {
             //     Console.Write("{0}->", cities.IndexOf(c));
             // }
@@ -775,33 +779,175 @@ public string[] bBSolveProblem()
             return newPath;
         }
 
+        public void iterativeKOpt(ref ArrayList path, int level, ref int[] indexes, ref bool foundSolution) {
+            int i = 0;
+            bool shouldBreak = false;
+            bool shouldContinue = false;
+            
+            int temp = 0;
+            double newPathCost = 0;
+            TSPSolution newPath;    
+            do {
+                if (timer.Elapsed.TotalMilliseconds >= time_limit) {
+                    break;
+                }
+                
+                shouldContinue = false;
+                if (shouldBreak) {
+                    // Console.Write("broke at (");
+                    // for (i = 0; i < indexes.Length; i++) {
+                    // Console.Write("{0},", indexes[i]);
+                    // }
+                    // Console.WriteLine(")");
+                    break;
+                }
+                for (i = 0; i < indexes.Length - 1; i++) {
+                    // if any index isn't greater than the previous one
+                    if ( indexes[i] >= indexes[i+1] ) {
+                        shouldBreak = true;
+                        for (i = 0; i < indexes.Length; i++) {
+                            // if any index isn't the size, we shouldn't break
+                            shouldBreak = shouldBreak && indexes[i] == this._size - 1;
+                        }
+                        if (shouldBreak) {
+                            // Console.Write("breaking after (");
+                            // for (i = 0; i < indexes.Length; i++) {
+                            // Console.Write("{0},", indexes[i]);
+                            // }
+                            // Console.WriteLine(")");
+                            shouldContinue = true;
+                            break;
+                        }
+                        // increment our index array
+                                
+                        // Console.Write("skipped (");
+                        // for (i = 0; i < indexes.Length; i++) {
+                        // Console.Write("{0},", indexes[i]);
+                        // }
+                        // Console.WriteLine(")");
+                        for (i = indexes.Length - 1; i >= 0; i--) {
+                            indexes[i] += 1;
+                            if (indexes[i] == this._size) {
+                                indexes[i] = 0;
+                            } else {
+                                break;
+                            }
+                        }
+                        // skip it
+                        shouldContinue = true;
+                    }
+                }
+
+                if (shouldContinue) {
+                    continue;
+                }
+
+                // we know that we have a valid path we should swap
+                ArrayList tempPath = path.Clone() as ArrayList;
+                for (i = 0; i < indexes.Length - 1; i++) {
+                    tempPath = Swap(tempPath, indexes[i], indexes[i+1]);   
+                }
+                // Console.WriteLine("-----");
+                newPath = new TSPSolution( tempPath );
+                newPathCost = newPath.costOfRoute();
+
+                if (costOfBssf() > newPathCost)
+                {
+                    Console.WriteLine("updating Best from {0} to {1}", costOfBssf(), newPathCost);
+                    setBssf(newPath);
+                    foundSolution = true;
+                }
+
+                
+                // Console.Write("tried (");
+                // for (i = 0; i < indexes.Length; i++) {
+                //    Console.Write("{0},", indexes[i]);
+                // }
+                // Console.WriteLine(")");
+                // increment our index array
+                
+                shouldBreak = true;
+                for (i = 0; i < indexes.Length; i++) {
+                    // if any index isn't the size, we shouldn't break
+                    shouldBreak = shouldBreak && indexes[i] == this._size - 1;
+                }
+                if (shouldBreak) {
+                    // Console.Write("breaking after (");
+                    // for (i = 0; i < indexes.Length; i++) {
+                    // Console.Write("{0},", indexes[i]);
+                    // }
+                    // Console.WriteLine(")");
+                    break;
+                }
+
+                for (i = indexes.Length - 1; i >= 0; i--) {
+                    indexes[i] += 1;
+                    if (indexes[i] == this._size) {
+                        indexes[i] = 0;
+                    } else {
+                        break;
+                    }
+                }
+            } while(true);
+        }
+
         public void recursiveKOpt(ref ArrayList path, int level, ref int[] indexes, ref bool foundSolution) {
             int i = 0;
-            if (foundSolution) {
-                return;
-            }
+            // if (foundSolution) {
+            //     // Console.Write("found solution so skipping (");
+            //     // for (i = 0; i < indexes.Length; i++) {
+            //     //    Console.Write("{0},", indexes[i]);
+            //     // }
+            //     // Console.WriteLine(")");
+            //     return;
+            // }
             if (level == 0) {
                 // do array stuff
-                //Console.Write("(");
-                //for (i = 0; i < indexes.Length; i++) {
+                // Console.Write("(");
+                // for (i = 0; i < indexes.Length; i++) {
                 //    Console.Write("{0},", indexes[i]);
-                //}
-                //Console.WriteLine(")");
+                // }
+                // Console.WriteLine(")");
 
                 int temp = 0;
                 Double previousBest;
                 double newPathCost = 0;
-                TSPSolution newPath;
+                TSPSolution newPath;    
+                
+                for (i = 0; i < indexes.Length - 1; i++) {
+                    // if any index isn't greater than the previous one
+                    if ( indexes[i] >= indexes[i+1] ) {
+                        for (i = indexes.Length - 1; i >= 0; i--) {
+                            indexes[i] += 1;
+                            if (indexes[i] == this._size) {
+                                indexes[i] = 0;
+                            } else {
+                                break;
+                            }
+                        }
+                        
+                        // Console.Write("exiting because overlap. moving to: (");
+                        // for (i = 0; i < indexes.Length; i++) {
+                        // Console.Write("{0},", indexes[i]);
+                        // }
+                        // Console.WriteLine(")");
+
+                        return;
+                    }
+                }
 
                 ArrayList tempPath = path.Clone() as ArrayList;
                 for (i = 0; i < indexes.Length - 1; i++) {
-                    tempPath = Swap(tempPath, indexes[i], indexes[i+1]);
+                    // if ( indexes[i] >= indexes[i+1] || indexes[i]-1 == indexes[i+1] || indexes[i] == indexes[i+1] + 1 || indexes[i] - 1 == indexes[i+1] + 1 ) {
+                    tempPath = Swap(tempPath, indexes[i], indexes[i+1]);   
                 }
+                // Console.WriteLine("-----");
                 newPath = new TSPSolution( tempPath );
                 newPathCost = newPath.costOfRoute();
 
-                if(bssf.costOfRoute() > newPathCost)
+                if (costOfBssf() > newPathCost)
                 {
+                    Console.WriteLine("updating Best from {0} to {1}", costOfBssf(), newPathCost);
                     setBssf(newPath);
                     foundSolution = true;
                     return;
@@ -817,7 +963,13 @@ public string[] bBSolveProblem()
                 }
             } else {
                 for (i = 0; i < this._size; i++) {
-                    recursiveKOpt(ref path, level-1, ref indexes, ref foundSolution);
+                    if (timer.Elapsed.TotalMilliseconds >= time_limit) {
+                        // Console.WriteLine("not recursing because out of time");
+                        break;
+                    }
+                    // if (!foundSolution) {
+                        recursiveKOpt(ref path, level-1, ref indexes, ref foundSolution);                        
+                    // }
                 }
             }
         }
@@ -829,12 +981,14 @@ public string[] bBSolveProblem()
             string[] results = new string[3];
             int updates = 0, i, k;
             setBssf(null);
+
             greedySolveProblem();
             bool betterSolutionFound;
             Double previousBest;
             double newPathCost = 0;
             TSPSolution newPath;
-            Stopwatch timer = new Stopwatch();
+
+            timer = new Stopwatch();
             timer.Reset();
             timer.Start();
 
@@ -843,28 +997,114 @@ public string[] bBSolveProblem()
             // calculates all the costs and fills our cost array
             fillArrayInPlaceWithCosts(ref costArray);
             // printCostArray(ref costArray);
-            // Console.WriteLine("\n----");
-            int level = 2;
-            //int level = 3;
-            //int level = 4;
-            int[] indexes = new int[level];
-
-            for (i=0; i<level; i++) {
-                indexes[i] = 0;
-            }
-
+            
+            int kopt;
+            
             bool foundSolution = false;
-            
+            // int level = 2;            
             //recursiveKOpt(ref bssf.Route, level, ref indexes, ref foundSolution);
-            
+            // for (limitOffset = 0; limitOffset <= 2; limitOffset++) {
+            //     Console.WriteLine("Attempting {0}-Opt Solution...", level + limitOffset);
+            //     int[] indexes = new int[level + limitOffset];
+            //     do
+            //     {
+            //         if (timer.Elapsed.TotalMilliseconds >= time_limit) {
+            //             Console.WriteLine("Out of time!");
+            //             break;
+            //         }
+            //         for (i=0; i<level + limitOffset; i++) {
+            //             indexes[i] = 0;
+            //         }
+            //         foundSolution = false;
+            //         recursiveKOpt(ref bssf.Route, level + limitOffset, ref indexes, ref foundSolution);
+            //     } while (foundSolution && timer.Elapsed.TotalMilliseconds < time_limit);
+            // }
+
+            kopt = 2;            
+
+            Console.WriteLine("Attempting {0}-Opt Solution...", kopt);
+            int[] indexes = new int[kopt];
             do
             {
+                if (timer.Elapsed.TotalMilliseconds >= time_limit) {
+                    Console.WriteLine("Out of time!");
+                    break;
+                }
+                for (i=0; i<kopt; i++) {
+                    indexes[i] = 0;
+                }
                 foundSolution = false;
-                recursiveKOpt(ref bssf.Route, level, ref indexes, ref foundSolution);
+                iterativeKOpt(ref bssf.Route, kopt, ref indexes, ref foundSolution);
             } while (foundSolution && timer.Elapsed.TotalMilliseconds < time_limit);
+            
 
+            bool foundFourOpt = false;
+            kopt = 3;
+            Console.WriteLine("Attempting {0}-Opt Solution...", kopt);
+            foundSolution = false;
+            indexes = new int[kopt];
+            do
+            {
+                if (timer.Elapsed.TotalMilliseconds >= time_limit) {
+                    Console.WriteLine("Out of time!");
+                    break;
+                }
+                for (i=0; i<kopt; i++) {
+                    indexes[i] = 0;
+                }
+                foundSolution = false;
+                iterativeKOpt(ref bssf.Route, kopt, ref indexes, ref foundSolution);
+                if (!foundFourOpt) {
+                    foundFourOpt = foundSolution;   
+                }
+            } while (foundSolution && timer.Elapsed.TotalMilliseconds < time_limit);
+            
+            bool foundThreeOpt = false;
+            if (!foundFourOpt) {
+                kopt = 4;
+                Console.WriteLine("Attempting {0}-Opt Solution...", kopt);
+                foundSolution = false;
+                indexes = new int[kopt];
+                do
+                {
+                    if (timer.Elapsed.TotalMilliseconds >= time_limit) {
+                        Console.WriteLine("Out of time!");
+                        break;
+                    }
+                    for (i=0; i<kopt; i++) {
+                        indexes[i] = 0;
+                    }
+                    foundSolution = false;
+                    iterativeKOpt(ref bssf.Route, kopt, ref indexes, ref foundSolution);
+                    
+                    if (!foundThreeOpt) {
+                        foundThreeOpt = foundSolution;   
+                    }
+                } while (foundSolution && timer.Elapsed.TotalMilliseconds < time_limit);
+            }
+            
+            if (foundThreeOpt || foundFourOpt) {
+                kopt = 2;
+                Console.WriteLine("Attempting {0}-Opt Solution...", kopt);
+                foundSolution = false;
+                indexes = new int[kopt];
+                do
+                {
+                    if (timer.Elapsed.TotalMilliseconds >= time_limit) {
+                        Console.WriteLine("Out of time!");
+                        break;
+                    }
+                    for (i=0; i<kopt; i++) {
+                        indexes[i] = 0;
+                    }
+                    foundSolution = false;
+                    iterativeKOpt(ref bssf.Route, kopt, ref indexes, ref foundSolution);
+                } while (foundSolution && timer.Elapsed.TotalMilliseconds < time_limit);
+            }
+            
             
             timer.Stop();
+            Console.WriteLine("FancySolve Cost: {0}", costOfBssf().ToString());
             results[COST] = costOfBssf().ToString();
             results[TIME] = timer.Elapsed.ToString();
             results[COUNT] = updates.ToString();
@@ -872,56 +1112,60 @@ public string[] bBSolveProblem()
             return results;
         }
 
+
         public string[] fancySolveProblem2()
         {
             Console.WriteLine("--------\nNew K-opt");
             string[] results = new string[3];
             int updates = 0, i, k;
-            defaultSolveProblem();
+            
+            setBssf(null);
+            greedySolveProblem();
             bool betterSolutionFound;
             Double previousBest;
             double newPathCost = 0;
             TSPSolution newPath;
-            Stopwatch timer = new Stopwatch();
+            timer = new Stopwatch();
             timer.Start();
 
             double[,] costArray = new double[this._size, this._size];
 
             // calculates all the costs and fills our cost array
             fillArrayInPlaceWithCosts(ref costArray);
-            printCostArray(ref costArray);
+            // printCostArray(ref costArray);
             Console.WriteLine("\n----");
 
             do
             {
-                previousBest = costOfBssf();
                 betterSolutionFound = false;
-                for (i = 0; i < Cities.Length-1 && timer.Elapsed.TotalMilliseconds < time_limit; i++)
+                for (i = 0; i < this._size-1 && timer.Elapsed.TotalMilliseconds < time_limit; i++)
                 {
-                    for(k = i+1; k < Cities.Length-1 && timer.Elapsed.TotalMilliseconds < time_limit; k++)
+                    for(k = i+1; k < this._size && timer.Elapsed.TotalMilliseconds < time_limit; k++)
                     {
                         newPath = new TSPSolution( Swap(bssf.Route, i, k) );
                         newPathCost = newPath.costOfRoute();
-                        if(previousBest > newPathCost)
+                        // Console.WriteLine("comparing Best after swapping {0} to {1} with {2} to {3}", i-1, i, k, k+1);
+                        if(costOfBssf() > newPathCost)
                         {
-                            //Console.WriteLine("updating Best after swapping {0} to {1} with {2} to {3}", i-1, i, k, k+1);
-                            //Console.WriteLine("Previous best: {0} New Route: {1}", previousBest, newPathCost);
+                            Console.WriteLine("updating Best from {0} to {1}", costOfBssf(), newPathCost);
+                            // Console.WriteLine("Previous best: {0} New Route: {1}", previousBest, newPathCost);
                             setBssf(newPath);
                             updates++;
                             betterSolutionFound = true;
-                            break;
+                            // break;
                         }
                         
                     }
-                    if (betterSolutionFound)
-                    {
-                        break;
-                    }
+                    // if (betterSolutionFound)
+                    // {
+                    //     break;
+                    // }
                 }
             } while (betterSolutionFound && timer.Elapsed.TotalMilliseconds < time_limit);
 
             
             timer.Stop();
+            Console.WriteLine("2-Opt Cost: {0}", costOfBssf().ToString());
             results[COST] = costOfBssf().ToString();
             results[TIME] = timer.Elapsed.ToString();
             results[COUNT] = updates.ToString();

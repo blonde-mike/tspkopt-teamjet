@@ -240,10 +240,10 @@ namespace TSP
             this.myTSPToolStripMenuItem.Text = "My TSP";
             this.myTSPToolStripMenuItem.Click += new System.EventHandler(this.myTSPToolStripMenuItem_Click);
 
-            this.myTSPToolStripMenuItem.Name = "myTSP2ToolStripMenuItem";
-            this.myTSPToolStripMenuItem.Size = new System.Drawing.Size(114, 22);
-            this.myTSPToolStripMenuItem.Text = "My TSP2";
-            this.myTSPToolStripMenuItem.Click += new System.EventHandler(this.myTSP2ToolStripMenuItem_Click);
+            this.myTSP2ToolStripMenuItem.Name = "myTSP2ToolStripMenuItem";
+            this.myTSP2ToolStripMenuItem.Size = new System.Drawing.Size(114, 22);
+            this.myTSP2ToolStripMenuItem.Text = "My TSP2";
+            this.myTSP2ToolStripMenuItem.Click += new System.EventHandler(this.myTSP2ToolStripMenuItem_Click);
             // 
             // greedyToolStripMenuItem
             // 
