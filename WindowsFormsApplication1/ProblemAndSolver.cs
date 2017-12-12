@@ -765,6 +765,53 @@ public string[] bBSolveProblem()
             return newPath;
         }
 
+        public void recursiveKOpt(ref ArrayList path, int level, ref int[] indexes, ref bool foundSolution) {
+            int i = 0;
+            if (foundSolution) {
+                return;
+            }
+            if (level == 0) {
+                // do array stuff
+                Console.Write("(");
+                for (i = 0; i < indexes.Length; i++) {
+                    Console.Write("{0},", indexes[i]);
+                }
+                Console.WriteLine(")");
+
+                int temp = 0;
+                Double previousBest;
+                double newPathCost = 0;
+                TSPSolution newPath;
+
+                ArrayList tempPath = path.Clone() as ArrayList;
+                for (i = 0; i < indexes.Length - 1; i++) {
+                    tempPath = Swap(tempPath, i, i+1);
+                }
+                newPath = new TSPSolution( tempPath );
+                newPathCost = newPath.costOfRoute();
+
+                if(bssf.costOfRoute() > newPathCost)
+                {
+                    bssf = newPath;
+                    foundSolution = true;
+                    return;
+                }
+
+                for (i = indexes.Length - 1; i >= 0; i--) {
+                    indexes[i] += 1;
+                    if (indexes[i] == this._size) {
+                        indexes[i] = 0;
+                    } else {
+                        break;
+                    }
+                }
+            } else {
+                for (i = 0; i < this._size; i++) {
+                    recursiveKOpt(ref path, level-1, ref indexes, ref foundSolution);
+                }
+            }
+        }
+
         //2-opt 
         public string[] fancySolveProblem()
         {
@@ -784,8 +831,53 @@ public string[] bBSolveProblem()
 
             // calculates all the costs and fills our cost array
             fillArrayInPlaceWithCosts(ref costArray);
-            //printCostArray(ref costArray);
-            //Console.WriteLine("\n----");
+            // printCostArray(ref costArray);
+            // Console.WriteLine("\n----");
+            int level = 2;
+            int[] indexes = new int[level];
+
+            for (i=0; i<level; i++) {
+                indexes[i] = 0;
+            }
+
+            bool foundSolution = false;
+            
+            recursiveKOpt(ref bssf.Route, level, ref indexes, ref foundSolution);
+            
+            do
+            {
+                betterSolutionFound = false;
+                recursiveKOpt(ref bssf.Route, level, ref indexes, ref foundSolution);
+            } while (betterSolutionFound && timer.Elapsed.TotalMilliseconds < time_limit);
+
+            
+            timer.Stop();
+            results[COST] = costOfBssf().ToString();
+            results[TIME] = timer.Elapsed.ToString();
+            results[COUNT] = updates.ToString();
+
+            return results;
+        }
+
+        public string[] fancySolveProblem2()
+        {
+            Console.WriteLine("--------\nNew K-opt");
+            string[] results = new string[3];
+            int updates = 0, i, k;
+            defaultSolveProblem();
+            bool betterSolutionFound;
+            Double previousBest;
+            double newPathCost = 0;
+            TSPSolution newPath;
+            Stopwatch timer = new Stopwatch();
+            timer.Start();
+
+            double[,] costArray = new double[this._size, this._size];
+
+            // calculates all the costs and fills our cost array
+            fillArrayInPlaceWithCosts(ref costArray);
+            printCostArray(ref costArray);
+            Console.WriteLine("\n----");
 
             do
             {

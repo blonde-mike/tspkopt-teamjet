@@ -245,6 +245,23 @@ namespace TSP
             Invalidate();                          // force a refresh.
         }
 
+        private void myTSP2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string[] results;
+            this.reset();
+
+            tbElapsedTime.Text = " Running...";
+            tbCostOfTour.Text = " Running...";
+            Refresh();
+
+            results = CityData.fancySolveProblem2();
+
+            tbCostOfTour.Text = results[ProblemAndSolver.COST];
+            tbElapsedTime.Text = results[ProblemAndSolver.TIME];
+            tbNumSolutions.Text = results[ProblemAndSolver.COUNT];
+            Invalidate();                          // force a refresh.
+        }
+
         private void AlgorithmMenu2_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
         {
             AlgorithmMenu2.Text = e.ClickedItem.Text;
