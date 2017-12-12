@@ -328,7 +328,11 @@ namespace TSP
 
         public void setBssf(TSPSolution newBSSF) {
             bssf = newBSSF;
-            bssf_cost = bssf.costOfRoute();
+            if (bssf != null) {
+                bssf_cost = bssf.costOfRoute();
+            } else {
+                bssf_cost = -1D;
+            }
         }
 
         /// <summary>
@@ -778,11 +782,11 @@ public string[] bBSolveProblem()
             }
             if (level == 0) {
                 // do array stuff
-                Console.Write("(");
-                for (i = 0; i < indexes.Length; i++) {
-                    Console.Write("{0},", indexes[i]);
-                }
-                Console.WriteLine(")");
+                //Console.Write("(");
+                //for (i = 0; i < indexes.Length; i++) {
+                //    Console.Write("{0},", indexes[i]);
+                //}
+                //Console.WriteLine(")");
 
                 int temp = 0;
                 Double previousBest;
@@ -791,7 +795,7 @@ public string[] bBSolveProblem()
 
                 ArrayList tempPath = path.Clone() as ArrayList;
                 for (i = 0; i < indexes.Length - 1; i++) {
-                    tempPath = Swap(tempPath, i, i+1);
+                    tempPath = Swap(tempPath, indexes[i], indexes[i+1]);
                 }
                 newPath = new TSPSolution( tempPath );
                 newPathCost = newPath.costOfRoute();
@@ -818,12 +822,13 @@ public string[] bBSolveProblem()
             }
         }
 
-        //2-opt 
+        //2-opt (modified to k-opt)
         public string[] fancySolveProblem()
         {
             Console.WriteLine("--------\nNew K-opt");
             string[] results = new string[3];
             int updates = 0, i, k;
+            setBssf(null);
             greedySolveProblem();
             bool betterSolutionFound;
             Double previousBest;
@@ -840,6 +845,8 @@ public string[] bBSolveProblem()
             // printCostArray(ref costArray);
             // Console.WriteLine("\n----");
             int level = 2;
+            //int level = 3;
+            //int level = 4;
             int[] indexes = new int[level];
 
             for (i=0; i<level; i++) {
@@ -848,13 +855,13 @@ public string[] bBSolveProblem()
 
             bool foundSolution = false;
             
-            recursiveKOpt(ref bssf.Route, level, ref indexes, ref foundSolution);
+            //recursiveKOpt(ref bssf.Route, level, ref indexes, ref foundSolution);
             
             do
             {
-                betterSolutionFound = false;
+                foundSolution = false;
                 recursiveKOpt(ref bssf.Route, level, ref indexes, ref foundSolution);
-            } while (betterSolutionFound && timer.Elapsed.TotalMilliseconds < time_limit);
+            } while (foundSolution && timer.Elapsed.TotalMilliseconds < time_limit);
 
             
             timer.Stop();
