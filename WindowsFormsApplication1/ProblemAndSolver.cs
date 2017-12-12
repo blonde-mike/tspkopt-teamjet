@@ -96,7 +96,8 @@ namespace TSP
         /// <summary>
         /// best solution so far. 
         /// </summary>
-        private TSPSolution bssf; 
+        private TSPSolution bssf;
+        private double bssf_cost = Double.PositiveInfinity;
 
         /// <summary>
         /// how to color various things. 
@@ -320,9 +321,14 @@ namespace TSP
         public double costOfBssf ()
         {
             if (bssf != null)
-                return (bssf.costOfRoute());                    
+                return (bssf_cost);                    
             else
                 return -1D; 
+        }
+
+        public void setBssf(TSPSolution newBSSF) {
+            bssf = newBSSF;
+            bssf_cost = bssf.costOfRoute();
         }
 
         /// <summary>
@@ -359,7 +365,7 @@ namespace TSP
                 {
                     Route.Add(Cities[perm[i]]);
                 }
-                bssf = new TSPSolution(Route);
+                setBssf(new TSPSolution(Route));
                 count++;
             } while (costOfBssf() == double.PositiveInfinity);                // until a valid route is found
             timer.Stop();
@@ -592,8 +598,8 @@ public string[] bBSolveProblem()
                             Console.WriteLine("WTF this path somehow got a bad edge and the new route is Infinity. This must happen when the next node does not have an edge back to our original node");
                         } else {
                             Console.WriteLine("post check lower bound on node: {0} new bssf: {1} currentBSSF: {2}", currentLowerBound, newBSSFCost, currentBSSFCost);
-                            bssf = tempBssf;
                             updatedBSSF = true;
+                            setBssf(tempBssf);
                             currentBSSFCost = newBSSFCost;
                             updates++;
                         }
@@ -710,7 +716,7 @@ public string[] bBSolveProblem()
                 newRoute.Add(Cities[index]);
             }
             // update BSSF with our new route of cities
-            bssf = new TSPSolution(newRoute);
+            setBssf(new TSPSolution(newRoute));
             // calculate the BSSF's actual cost
             double newBSSFCost = costOfBssf();
 
@@ -893,7 +899,7 @@ public string[] bBSolveProblem()
                         {
                             //Console.WriteLine("updating Best after swapping {0} to {1} with {2} to {3}", i-1, i, k, k+1);
                             //Console.WriteLine("Previous best: {0} New Route: {1}", previousBest, newPathCost);
-                            bssf = newPath;
+                            setBssf(newPath);
                             updates++;
                             betterSolutionFound = true;
                             break;
