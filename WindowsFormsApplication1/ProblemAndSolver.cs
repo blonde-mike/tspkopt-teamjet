@@ -777,29 +777,30 @@ public string[] bBSolveProblem()
             double newPathCost = 0;
             TSPSolution newPath;
             Stopwatch timer = new Stopwatch();
+            timer.Reset();
             timer.Start();
 
             double[,] costArray = new double[this._size, this._size];
 
             // calculates all the costs and fills our cost array
             fillArrayInPlaceWithCosts(ref costArray);
-            printCostArray(ref costArray);
-            Console.WriteLine("\n----");
+            //printCostArray(ref costArray);
+            //Console.WriteLine("\n----");
 
             do
             {
                 previousBest = costOfBssf();
                 betterSolutionFound = false;
-                for (i = 0; i < Cities.Length-1; i++)
+                for (i = 0; i < Cities.Length-1 && timer.Elapsed.TotalMilliseconds < time_limit; i++)
                 {
-                    for(k = i+1; k < Cities.Length-1; k++)
+                    for(k = i+1; k < Cities.Length-1 && timer.Elapsed.TotalMilliseconds < time_limit; k++)
                     {
                         newPath = new TSPSolution( Swap(bssf.Route, i, k) );
                         newPathCost = newPath.costOfRoute();
                         if(previousBest > newPathCost)
                         {
-                            Console.WriteLine("updating Best after swapping {0} to {1} with {2} to {3}", i-1, i, k, k+1);
-                            Console.WriteLine("Previous best: {0} New Route: {1}", previousBest, newPathCost);
+                            //Console.WriteLine("updating Best after swapping {0} to {1} with {2} to {3}", i-1, i, k, k+1);
+                            //Console.WriteLine("Previous best: {0} New Route: {1}", previousBest, newPathCost);
                             bssf = newPath;
                             updates++;
                             betterSolutionFound = true;
@@ -812,7 +813,7 @@ public string[] bBSolveProblem()
                         break;
                     }
                 }
-            } while (betterSolutionFound);
+            } while (betterSolutionFound && timer.Elapsed.TotalMilliseconds < time_limit);
 
             
             timer.Stop();
