@@ -96,7 +96,8 @@ namespace TSP
         /// <summary>
         /// best solution so far. 
         /// </summary>
-        private TSPSolution bssf; 
+        private TSPSolution bssf;
+        private double bssf_cost = Double.PositiveInfinity;
 
         /// <summary>
         /// how to color various things. 
@@ -320,9 +321,18 @@ namespace TSP
         public double costOfBssf ()
         {
             if (bssf != null)
-                return (bssf.costOfRoute());                    
+                return (bssf_cost);                    
             else
                 return -1D; 
+        }
+
+        public void setBssf(TSPSolution newBSSF) {
+            bssf = newBSSF;
+            if (bssf != null) {
+                bssf_cost = bssf.costOfRoute();
+            } else {
+                bssf_cost = -1D;
+            }
         }
 
         /// <summary>
@@ -359,7 +369,7 @@ namespace TSP
                 {
                     Route.Add(Cities[perm[i]]);
                 }
-                bssf = new TSPSolution(Route);
+                setBssf(new TSPSolution(Route));
                 count++;
             } while (costOfBssf() == double.PositiveInfinity);                // until a valid route is found
             timer.Stop();
@@ -592,8 +602,8 @@ public string[] bBSolveProblem()
                             Console.WriteLine("WTF this path somehow got a bad edge and the new route is Infinity. This must happen when the next node does not have an edge back to our original node");
                         } else {
                             Console.WriteLine("post check lower bound on node: {0} new bssf: {1} currentBSSF: {2}", currentLowerBound, newBSSFCost, currentBSSFCost);
-                            bssf = tempBssf;
                             updatedBSSF = true;
+                            setBssf(tempBssf);
                             currentBSSFCost = newBSSFCost;
                             updates++;
                         }
@@ -710,7 +720,7 @@ public string[] bBSolveProblem()
                 newRoute.Add(Cities[index]);
             }
             // update BSSF with our new route of cities
-            bssf = new TSPSolution(newRoute);
+            setBssf(new TSPSolution(newRoute));
             // calculate the BSSF's actual cost
             double newBSSFCost = costOfBssf();
 
@@ -765,13 +775,109 @@ public string[] bBSolveProblem()
             return newPath;
         }
 
-        //2-opt 
+        public void recursiveKOpt(ref ArrayList path, int level, ref int[] indexes, ref bool foundSolution) {
+            int i = 0;
+            if (foundSolution) {
+                return;
+            }
+            if (level == 0) {
+                // do array stuff
+                //Console.Write("(");
+                //for (i = 0; i < indexes.Length; i++) {
+                //    Console.Write("{0},", indexes[i]);
+                //}
+                //Console.WriteLine(")");
+
+                int temp = 0;
+                Double previousBest;
+                double newPathCost = 0;
+                TSPSolution newPath;
+
+                ArrayList tempPath = path.Clone() as ArrayList;
+                for (i = 0; i < indexes.Length - 1; i++) {
+                    tempPath = Swap(tempPath, indexes[i], indexes[i+1]);
+                }
+                newPath = new TSPSolution( tempPath );
+                newPathCost = newPath.costOfRoute();
+
+                if(bssf.costOfRoute() > newPathCost)
+                {
+                    setBssf(newPath);
+                    foundSolution = true;
+                    return;
+                }
+
+                for (i = indexes.Length - 1; i >= 0; i--) {
+                    indexes[i] += 1;
+                    if (indexes[i] == this._size) {
+                        indexes[i] = 0;
+                    } else {
+                        break;
+                    }
+                }
+            } else {
+                for (i = 0; i < this._size; i++) {
+                    recursiveKOpt(ref path, level-1, ref indexes, ref foundSolution);
+                }
+            }
+        }
+
+        //2-opt (modified to k-opt)
         public string[] fancySolveProblem()
         {
             Console.WriteLine("--------\nNew K-opt");
             string[] results = new string[3];
             int updates = 0, i, k;
+            setBssf(null);
             greedySolveProblem();
+            bool betterSolutionFound;
+            Double previousBest;
+            double newPathCost = 0;
+            TSPSolution newPath;
+            Stopwatch timer = new Stopwatch();
+            timer.Reset();
+            timer.Start();
+
+            double[,] costArray = new double[this._size, this._size];
+
+            // calculates all the costs and fills our cost array
+            fillArrayInPlaceWithCosts(ref costArray);
+            // printCostArray(ref costArray);
+            // Console.WriteLine("\n----");
+            int level = 2;
+            //int level = 3;
+            //int level = 4;
+            int[] indexes = new int[level];
+
+            for (i=0; i<level; i++) {
+                indexes[i] = 0;
+            }
+
+            bool foundSolution = false;
+            
+            //recursiveKOpt(ref bssf.Route, level, ref indexes, ref foundSolution);
+            
+            do
+            {
+                foundSolution = false;
+                recursiveKOpt(ref bssf.Route, level, ref indexes, ref foundSolution);
+            } while (foundSolution && timer.Elapsed.TotalMilliseconds < time_limit);
+
+            
+            timer.Stop();
+            results[COST] = costOfBssf().ToString();
+            results[TIME] = timer.Elapsed.ToString();
+            results[COUNT] = updates.ToString();
+
+            return results;
+        }
+
+        public string[] fancySolveProblem2()
+        {
+            Console.WriteLine("--------\nNew K-opt");
+            string[] results = new string[3];
+            int updates = 0, i, k;
+            defaultSolveProblem();
             bool betterSolutionFound;
             Double previousBest;
             double newPathCost = 0;
@@ -790,17 +896,17 @@ public string[] bBSolveProblem()
             {
                 previousBest = costOfBssf();
                 betterSolutionFound = false;
-                for (i = 0; i < Cities.Length-1; i++)
+                for (i = 0; i < Cities.Length-1 && timer.Elapsed.TotalMilliseconds < time_limit; i++)
                 {
-                    for(k = i+1; k < Cities.Length-1; k++)
+                    for(k = i+1; k < Cities.Length-1 && timer.Elapsed.TotalMilliseconds < time_limit; k++)
                     {
                         newPath = new TSPSolution( Swap(bssf.Route, i, k) );
                         newPathCost = newPath.costOfRoute();
                         if(previousBest > newPathCost)
                         {
-                            Console.WriteLine("updating Best after swapping {0} to {1} with {2} to {3}", i-1, i, k, k+1);
-                            Console.WriteLine("Previous best: {0} New Route: {1}", previousBest, newPathCost);
-                            bssf = newPath;
+                            //Console.WriteLine("updating Best after swapping {0} to {1} with {2} to {3}", i-1, i, k, k+1);
+                            //Console.WriteLine("Previous best: {0} New Route: {1}", previousBest, newPathCost);
+                            setBssf(newPath);
                             updates++;
                             betterSolutionFound = true;
                             break;
@@ -812,7 +918,7 @@ public string[] bBSolveProblem()
                         break;
                     }
                 }
-            } while (betterSolutionFound);
+            } while (betterSolutionFound && timer.Elapsed.TotalMilliseconds < time_limit);
 
             
             timer.Stop();
