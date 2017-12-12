@@ -807,7 +807,7 @@ public string[] bBSolveProblem()
                         {
                             //Console.WriteLine("updating Best after swapping {0} to {1} with {2} to {3}", i-1, i, k, k+1);
                             //Console.WriteLine("Previous best: {0} New Route: {1}", previousBest, newPathCost);
-                            bssf = newPath;
+                            setBssf(newPath);
                             updates++;
                             betterSolutionFound = true;
                             break;
