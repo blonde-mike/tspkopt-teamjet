@@ -798,7 +798,7 @@ public string[] bBSolveProblem()
 
                 if(bssf.costOfRoute() > newPathCost)
                 {
-                    bssf = newPath;
+                    setBssf(newPath);
                     foundSolution = true;
                     return;
                 }
